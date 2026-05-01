@@ -1,9 +1,12 @@
-name: Build Windows EXE
+name: Build Windows EXE (Tauri 2.x)
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -13,28 +16,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
         with:
-          python-version: '3.12'
+          targets: x86_64-pc-windows-msvc
 
-      - name: Install PyInstaller
-        run: pip install pyinstaller
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-      - name: Build EXE (minimal size)
+      - name: Install frontend deps
+        run: npm install
+
+      - name: Install Rust deps
         run: |
-          pyinstaller --onefile --windowed --name HKA `
-            --add-data "hka-config.json;." `
-            --exclude-module tkinter.test `
-            --noconfirm `
-            main.py
+          cd src-tauri
+          cargo fetch
+
+      - name: Build Tauri app
+        run: npm run tauri build
+        env:
+          CARGO_INCREMENTAL: 0
 
       - name: Show output size
-        run: dir dist\HKA.exe
+        run: dir /s /b "src-tauri\target\release\hka.exe"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: HKA-Windows-EXE
-          path: dist/HKA.exe
+          name: HKA-Tauri-Windows-EXE
+          path: src-tauri/target/release/hka.exe
           retention-days: 30
