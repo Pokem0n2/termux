@@ -1,0 +1,40 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build EXE (minimal size)
+        run: |
+          pyinstaller --onefile --windowed --name HKA `
+            --add-data "hka-config.json;." `
+            --exclude-module tkinter.test `
+            --noconfirm `
+            main.py
+
+      - name: Show output size
+        run: ls -lh dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HKA-Windows-EXE
+          path: dist/HKA.exe
+          retention-days: 30
