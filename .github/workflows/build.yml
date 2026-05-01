@@ -30,7 +30,7 @@ jobs:
             main.py
 
       - name: Show output size
-        run: ls -lh dist/
+        run: dir dist\HKA.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
